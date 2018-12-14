@@ -52,6 +52,7 @@ class T1DSimEnvBatchStates(gym.Env):
 
         # Added by Jonas -- state space is now 10 * sample_time = 30 minutes long
         self.state_space_length = 10
+        self.insulin_history = np.zeros(4)
 
     @staticmethod
     def pick_patient():
@@ -78,19 +79,30 @@ class T1DSimEnvBatchStates(gym.Env):
         # This gym only controls basal insulin
         act = Action(basal=action, bolus=0)
 
-        for i in range(self.state_space_length-1):
+        # ===========================================
+        # This has been added by JONAS TODO
+        # ===========================================
+        cgm = []
+        insulin = []
+        reward = []
+        for i in range(self.state_space_length):
 
-            self.env.step(act)
-            # if self.reward_fun is None:
-                # return self.env.step(act)
-            # else:
-                # return self.env.step(act, reward_fun=self.reward_fun)
+            s, r, done, _ = self.env.step(act)
+            cgm.append(s.CGM)
+            insulin.append(act.basal)
+            reward.append(r)
 
-        return self.env.step(act)
+        # Updating state
+        state = np.concatenate([cgm, np.ravel(np.fliplr(self.env.insulin_hist[-4:]))])
+
+        return np.array(state), np.mean(reward), done, {}
 
     def _reset(self):
         obs, _, _, _ = self.env.reset()
-        return obs
+
+        cgm = obs.CGM
+
+        return np.concatenate([np.repeat(cgm, 10), np.zeros(4)])
 
     def _seed(self, seed=None):
         self.np_random, seed1 = seeding.np_random(seed=seed)
@@ -107,9 +119,12 @@ class T1DSimEnvBatchStates(gym.Env):
     @property
     def action_space(self):
         ub = self.env.pump._params['max_basal']
+
+        # Jonas changed this:
+        ub = 10
         return spaces.Box(low=0, high=ub, shape=(1,))
 
     @property
     def observation_space(self):
-        return spaces.Box(low=0, high=np.inf, shape=(1,))
+        return spaces.Box(low=0, high=np.inf, shape=(14,))
 

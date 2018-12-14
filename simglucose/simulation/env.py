@@ -6,6 +6,10 @@ import logging
 from collections import namedtuple
 from simglucose.simulation.rendering import Viewer
 
+# Jonas imports
+import numpy as np
+from gym.envs.diabetes.reward_function import calculate_reward
+
 try:
     from rllab.envs.base import Step
 except ImportError:
@@ -99,8 +103,9 @@ class T1DSimEnv(object):
         # Compute reward, and decide whether game is over
         window_size = int(60 / self.sample_time)
         BG_last_hour = self.CGM_hist[-window_size:]
-        reward = reward_fun(BG_last_hour)
-        done = BG < 70 or BG > 350
+        # reward = reward_fun(BG_last_hour)
+        reward = np.mean(calculate_reward(np.array([BG_last_hour]), reward_flag='gaussian'))
+        done = BG < 0 or BG > 350
         obs = Observation(CGM=CGM)
 
         return Step(

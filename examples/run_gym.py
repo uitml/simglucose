@@ -6,11 +6,11 @@ import numpy as np
 # patient_name must be 'adolescent#001' to 'adolescent#010',
 # or 'adult#001' to 'adult#010', or 'child#001' to 'child#010'
 from gym.envs.registration import register
-register(
-    id='simglucose-adolescent2-v0',
-    entry_point='simglucose.envs:T1DSimEnvBatchStates',
-    kwargs={'patient_name': 'adolescent#002'}
-)
+# register(
+    # id='simglucose-adolescent2-v0',
+    # entry_point='simglucose.envs:T1DSimEnvBatchStates',
+    # kwargs={'patient_name': 'adolescent#002'}
+# )
 
 env = gym.make('simglucose-adolescent2-v0')
 
@@ -27,10 +27,11 @@ for t in range(48):
     # to control the glucose only through basal instead
     # of asking patient to take bolus
     # action = env.action_space.sample()
-    if meal > 0:
-        action = np.array([meal/3])
-    else:
-        action = np.array([.03])
+    action = np.array([np.random.sample()/50])
+    # if meal > 0:
+        # action = np.array([meal/3])
+    # else:
+        # action = np.array([.03])
 
     observation, reward, done, info = env.step(action)
     meal = env.env.CHO_hist[-1]
